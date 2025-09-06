@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(PATIENT)
+  credits   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  questionsAsked   Question[] @relation("PatientQuestions")
+  questionsAnswered Question[] @relation("ConsultantQuestions")
+  
+  @@map("users")
+}
+
+model Question {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  status      QuestionStatus @default(PENDING)
+  priority    Priority      @default(MEDIUM)
+  specialty   String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  patientId     String
+  patient       User    @relation("PatientQuestions", fields: [patientId], references: [id])
+  consultantId  String?
+  consultant    User?   @relation("ConsultantQuestions", fields: [consultantId], references: [id])
+  
+  @@map("questions")
+}
+
+enum Role {
+  PATIENT
+  CONSULTANT
+  ADMIN
+}
+
+enum QuestionStatus {
+  PENDING
+  IN_PROGRESS
+  ANSWERED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
